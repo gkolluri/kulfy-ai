@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ImageLoaderProps {
   src: string;
@@ -10,6 +10,22 @@ interface ImageLoaderProps {
   priority?: boolean;
 }
 
+// Fun Telugu loading messages with Kulfy branding
+const teluguLoadingMessages = [
+  { text: "Konchem wait chey... Kulfy load chestunna!", emoji: "🔍" },
+  { text: "Picture ready avutundi... Patience!", emoji: "🎬" },
+  { text: "Loading... Loading... Loadinguuu!", emoji: "⚡" },
+  { text: "Inka konchem sepu... Almost ready!", emoji: "⏳" },
+  { text: "Kulfy nundi teestunna... Wait chey boss!", emoji: "🚀" },
+  { text: "Meme ready chestunam... Dhairyam!", emoji: "💪" },
+  { text: "Kulfy download avutundi... Calm ga undandi!", emoji: "😎" },
+  { text: "Vasthundi vasthundi... Kulfy vasthundi!", emoji: "🎭" },
+  { text: "Network slow undi... Adjust chesko!", emoji: "🐌" },
+  { text: "Loading babai... Lite tesko!", emoji: "🤙" },
+  { text: "Kulfy ready avutundi... Chill!", emoji: "🍦" },
+  { text: "Kulfy lo search... Inka sariga!", emoji: "🎯" },
+];
+
 export function ImageLoader({ 
   src, 
   alt, 
@@ -18,6 +34,21 @@ export function ImageLoader({
 }: ImageLoaderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState(
+    teluguLoadingMessages[Math.floor(Math.random() * teluguLoadingMessages.length)]
+  );
+
+  // Rotate messages every 2 seconds while loading
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const interval = setInterval(() => {
+      const newMessage = teluguLoadingMessages[Math.floor(Math.random() * teluguLoadingMessages.length)];
+      setLoadingMessage(newMessage);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -39,8 +70,8 @@ export function ImageLoader({
           </div>
           {/* Loading Text */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="inline-block">
+            <div className="text-center px-4">
+              <div className="inline-block mb-3">
                 <svg
                   className="animate-spin h-12 w-12 text-purple-400"
                   xmlns="http://www.w3.org/2000/svg"
@@ -62,8 +93,11 @@ export function ImageLoader({
                   />
                 </svg>
               </div>
-              <p className="mt-3 text-sm font-medium text-purple-300 animate-pulse">
-                Loading from IPFS...
+              <p className="text-3xl mb-2 animate-bounce">
+                {loadingMessage.emoji}
+              </p>
+              <p className="text-sm font-bold text-purple-300 animate-pulse-fast">
+                {loadingMessage.text}
               </p>
             </div>
           </div>
@@ -74,9 +108,9 @@ export function ImageLoader({
       {hasError && (
         <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-orange-900/20 flex items-center justify-center">
           <div className="text-center p-4">
-            <div className="text-4xl mb-2">⚠️</div>
-            <p className="text-sm text-red-300 font-medium">Failed to load image</p>
-            <p className="text-xs text-red-400 mt-1">IPFS may be slow</p>
+            <div className="text-4xl mb-2 animate-bounce">😅</div>
+            <p className="text-sm text-red-300 font-bold">Ayyo! Picture raledhu!</p>
+            <p className="text-xs text-red-400 mt-1">Network slow undi... Refresh chey!</p>
           </div>
         </div>
       )}
