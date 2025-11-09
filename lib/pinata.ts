@@ -90,12 +90,13 @@ export async function pinFileToPinata(file: File): Promise<PinataUploadResponse>
 }
 
 /**
- * Convert a CID to a public gateway URL
+ * Convert a CID to a proxied image URL
+ * Uses Next.js API route to handle gateway authentication
  * @param cid - The IPFS CID
- * @returns The full gateway URL
+ * @returns The proxied image URL
  */
 export function cidToUrl(cid: string): string {
-  const { PINATA_GATEWAY } = getPinataConfig();
-  return `https://${PINATA_GATEWAY}/ipfs/${cid}`;
+  // Use API proxy to avoid exposing gateway key to client
+  return `/api/image/${cid}`;
 }
 

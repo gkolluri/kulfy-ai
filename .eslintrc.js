@@ -1,8 +1,0 @@
-module.exports = {
-  extends: 'next',
-  rules: {
-    // Add custom rules here if needed
-  },
-}
-
-
