@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ImageLoader } from '@/components/image-loader';
 
 interface PendingPost {
   _id: string;
@@ -187,14 +188,14 @@ export default function AdminPage() {
                 className="bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20 hover:border-purple-500 transition-all"
               >
                 {/* Image */}
-                <div className="relative aspect-square bg-black/50">
-                  <img
+                <div className="relative aspect-square bg-black/50 overflow-hidden">
+                  <ImageLoader
                     src={getImageUrl(post.cid)}
                     alt={post.title || 'Pending post'}
-                    className="w-full h-full object-contain"
                     loading="lazy"
+                    className="w-full h-full object-contain"
                   />
-                  <div className="absolute top-2 right-2 px-3 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full">
+                  <div className="absolute top-2 right-2 px-3 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full z-10">
                     PENDING
                   </div>
                 </div>

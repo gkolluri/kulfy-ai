@@ -6,6 +6,7 @@ import Post from '@/models/Post';
 import User from '@/models/User';
 import Tag from '@/models/Tag';
 import ShareButtons from '@/components/share-buttons';
+import { ImageLoader } from '@/components/image-loader';
 
 export const dynamic = 'force-dynamic';
 
@@ -127,12 +128,15 @@ export default async function KulfyDetailPage({ params }: { params: Promise<{ id
         {/* Main Content Card */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
           {/* Image */}
-          <div className="relative bg-black">
-            <img
-              src={imageUrl}
-              alt={post.title || 'Kulfy meme'}
-              className="w-full h-auto max-h-[70vh] object-contain mx-auto"
-            />
+          <div className="relative bg-black min-h-[400px] flex items-center justify-center">
+            <div className="w-full max-h-[70vh]">
+              <ImageLoader
+                src={imageUrl}
+                alt={post.title || 'Kulfy meme'}
+                loading="eager"
+                className="w-full h-auto max-h-[70vh] object-contain mx-auto"
+              />
+            </div>
           </div>
 
           {/* Post Details */}

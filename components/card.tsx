@@ -1,4 +1,5 @@
 import React from 'react';
+import { ImageLoader } from './image-loader';
 
 interface CardProps {
   imageUrl: string;
@@ -10,8 +11,8 @@ interface CardProps {
 export function Card({ imageUrl, title, alt = 'Kulfy meme', postId }: CardProps) {
   const content = (
     <>
-      <div className="relative w-full aspect-square">
-        <img
+      <div className="relative w-full aspect-square overflow-hidden bg-gray-900">
+        <ImageLoader
           src={imageUrl}
           alt={alt}
           loading="lazy"
