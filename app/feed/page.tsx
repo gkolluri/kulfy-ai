@@ -82,6 +82,7 @@ export default async function FeedPage() {
                 imageUrl={cidToUrl(post.cid)}
                 title={post.title}
                 alt={post.title || 'Kulfy meme'}
+                postId={post._id}
               />
             ))}
           </div>

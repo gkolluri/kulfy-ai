@@ -4,11 +4,12 @@ interface CardProps {
   imageUrl: string;
   title?: string;
   alt?: string;
+  postId?: string;
 }
 
-export function Card({ imageUrl, title, alt = 'Kulfy meme' }: CardProps) {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+export function Card({ imageUrl, title, alt = 'Kulfy meme', postId }: CardProps) {
+  const content = (
+    <>
       <div className="relative w-full aspect-square">
         <img
           src={imageUrl}
@@ -24,6 +25,23 @@ export function Card({ imageUrl, title, alt = 'Kulfy meme' }: CardProps) {
           </p>
         </div>
       )}
+    </>
+  );
+
+  if (postId) {
+    return (
+      <a
+        href={`/kulfy/${postId}`}
+        className="block bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      {content}
     </div>
   );
 }
