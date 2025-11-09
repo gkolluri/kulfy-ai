@@ -34,12 +34,14 @@ export function ImageLoader({
 }: ImageLoaderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState(
-    teluguLoadingMessages[Math.floor(Math.random() * teluguLoadingMessages.length)]
-  );
+  // Use first message initially to avoid hydration mismatch
+  const [loadingMessage, setLoadingMessage] = useState(teluguLoadingMessages[0]);
 
-  // Rotate messages every 2 seconds while loading
+  // Set random message on mount and rotate every 2 seconds
   useEffect(() => {
+    // Set initial random message on client mount
+    setLoadingMessage(teluguLoadingMessages[Math.floor(Math.random() * teluguLoadingMessages.length)]);
+    
     if (!isLoading) return;
     
     const interval = setInterval(() => {
