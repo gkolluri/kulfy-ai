@@ -109,9 +109,8 @@ export default function AdminPage() {
   };
 
   const getImageUrl = (cid: string) => {
-    // Use dedicated gateway to avoid rate limits
-    const gateway = process.env.NEXT_PUBLIC_PINATA_GATEWAY || 'white-immense-bedbug-311.mypinata.cloud';
-    return `https://${gateway}/ipfs/${cid}`;
+    // Use API proxy to handle gateway authentication
+    return `/api/image/${cid}`;
   };
 
   if (loading) {
