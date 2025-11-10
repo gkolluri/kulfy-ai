@@ -45,19 +45,22 @@ async function getPost(id: string): Promise<PostDetail | null> {
       return null;
     }
 
+    // Type assertion for populated fields
+    const populatedPost = post as any;
+
     return {
-      _id: post._id.toString(),
-      cid: post.cid,
-      title: post.title,
-      mime: post.mime,
-      width: post.width,
-      height: post.height,
-      status: post.status,
-      createdAt: post.createdAt,
+      _id: populatedPost._id.toString(),
+      cid: populatedPost.cid,
+      title: populatedPost.title,
+      mime: populatedPost.mime,
+      width: populatedPost.width,
+      height: populatedPost.height,
+      status: populatedPost.status,
+      createdAt: populatedPost.createdAt,
       user: {
-        handle: post.userId?.handle || 'anonymous',
+        handle: populatedPost.userId?.handle || 'anonymous',
       },
-      tags: post.tags?.map((tag: any) => ({ name: tag.name })) || [],
+      tags: populatedPost.tags?.map((tag: any) => ({ name: tag.name })) || [],
     };
   } catch (error) {
     console.error('Error fetching post:', error);
