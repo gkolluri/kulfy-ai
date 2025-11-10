@@ -37,11 +37,8 @@ export default async function FeedPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Navigation */}
       <div className="mb-6 flex gap-3 justify-center">
-        <a href="/upload" className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors text-sm">
-          ⬆️ Upload
-        </a>
-        <a href="/admin" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm">
-          🛡️ Admin
+        <a href="/upload" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors text-sm">
+          ⬆️ Upload Kulfy
         </a>
       </div>
 

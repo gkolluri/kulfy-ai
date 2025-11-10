@@ -53,12 +53,6 @@ export default function RootLayout({
                 >
                   Feed
                 </a>
-                <a
-                  href="/admin"
-                  className="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm rounded-full font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300"
-                >
-                  Admin
-                </a>
               </nav>
             </div>
           </div>
