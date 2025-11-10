@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface ImageLoaderProps {
   src: string;
@@ -31,15 +31,15 @@ export function ImageLoader({
   alt, 
   className = '', 
   loading = 'lazy',
+  priority = false,
 }: ImageLoaderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  // Use first message initially to avoid hydration mismatch
   const [loadingMessage, setLoadingMessage] = useState(teluguLoadingMessages[0]);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Set random message on mount and rotate every 2 seconds
+  // Set random message on mount and rotate faster for priority images
   useEffect(() => {
-    // Set initial random message on client mount
     setLoadingMessage(teluguLoadingMessages[Math.floor(Math.random() * teluguLoadingMessages.length)]);
     
     if (!isLoading) return;
@@ -47,16 +47,39 @@ export function ImageLoader({
     const interval = setInterval(() => {
       const newMessage = teluguLoadingMessages[Math.floor(Math.random() * teluguLoadingMessages.length)];
       setLoadingMessage(newMessage);
-    }, 2000);
+    }, priority ? 1000 : 2000);
 
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, [isLoading, priority]);
+
+  // Check if image is already loaded (from cache)
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalHeight !== 0) {
+      console.log('[ImageLoader] Image already loaded from cache:', src);
+      setIsLoading(false);
+    }
+  }, [src]);
+
+  // Fallback timeout to hide loading state
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('[ImageLoader] Timeout reached, hiding loader:', src);
+        setIsLoading(false);
+      }
+    }, 15000); // 15 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [isLoading, src]);
 
   const handleLoad = () => {
+    console.log('[ImageLoader] onLoad fired:', src);
     setIsLoading(false);
   };
 
   const handleError = () => {
+    console.log('[ImageLoader] onError fired:', src);
     setIsLoading(false);
     setHasError(true);
   };
@@ -119,6 +142,7 @@ export function ImageLoader({
 
       {/* Actual Image */}
       <img
+        ref={imgRef}
         src={src}
         alt={alt}
         loading={loading}

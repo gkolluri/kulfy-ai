@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { KulfyIcon } from '@/components/kulfy-icon';
+import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({
         </Script>
       </head>
       <body className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <ServiceWorkerRegistration />
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">

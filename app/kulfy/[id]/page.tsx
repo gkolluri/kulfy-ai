@@ -8,7 +8,8 @@ import Tag from '@/models/Tag';
 import ShareButtons from '@/components/share-buttons';
 import { ImageLoader } from '@/components/image-loader';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every hour for better performance
+export const revalidate = 3600;
 
 interface PostDetail {
   _id: string;
@@ -29,17 +30,23 @@ interface PostDetail {
 
 async function getPost(id: string): Promise<PostDetail | null> {
   try {
+    const startTime = Date.now();
+    
     await connectToDB();
+    console.log(`[PERF] DB connection: ${Date.now() - startTime}ms`);
     
     // Ensure models are loaded
     if (!User || !Tag) {
       throw new Error('Models not loaded');
     }
 
+    const queryStart = Date.now();
     const post = await Post.findById(id)
       .populate('userId', 'handle')
       .populate('tags', 'name')
+      .select('cid title mime width height status createdAt userId tags')
       .lean();
+    console.log(`[PERF] DB query: ${Date.now() - queryStart}ms`);
 
     if (!post || post.status !== 'APPROVED') {
       return null;
@@ -48,7 +55,7 @@ async function getPost(id: string): Promise<PostDetail | null> {
     // Type assertion for populated fields
     const populatedPost = post as any;
 
-    return {
+    const result: PostDetail = {
       _id: populatedPost._id.toString(),
       cid: populatedPost.cid,
       title: populatedPost.title,
@@ -62,6 +69,9 @@ async function getPost(id: string): Promise<PostDetail | null> {
       },
       tags: populatedPost.tags?.map((tag: any) => ({ name: tag.name })) || [],
     };
+
+    console.log(`[PERF] Total getPost time: ${Date.now() - startTime}ms`);
+    return result;
   } catch (error) {
     console.error('Error fetching post:', error);
     return null;
@@ -137,6 +147,7 @@ export default async function KulfyDetailPage({ params }: { params: Promise<{ id
                 src={imageUrl}
                 alt={post.title || 'Kulfy meme'}
                 loading="eager"
+                priority={true}
                 className="w-full h-auto max-h-[70vh] object-contain mx-auto"
               />
             </div>

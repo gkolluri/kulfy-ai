@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { ImageLoader } from './image-loader';
 
@@ -34,6 +36,16 @@ export function Card({ imageUrl, title, alt = 'Kulfy meme', postId }: CardProps)
       <a
         href={`/kulfy/${postId}`}
         className="block bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer"
+        // Prefetch image on hover for instant loading
+        onMouseEnter={() => {
+          if (typeof window !== 'undefined') {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.as = 'image';
+            link.href = imageUrl;
+            document.head.appendChild(link);
+          }
+        }}
       >
         {content}
       </a>
