@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    // Disable ESLint during build to avoid circular structure errors
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {
