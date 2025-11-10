@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
+import { KulfyIcon } from '@/components/kulfy-icon';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
@@ -13,25 +15,49 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZV7JQ98CLH"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-ZV7JQ98CLH');
+          `}
+        </Script>
+      </head>
       <body className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <header className="bg-white dark:bg-gray-800 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">
-              <a href="/" className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                🍦 Kulfy
+              <a href="/" className="flex items-center gap-2 group">
+                <KulfyIcon size="sm" />
+                <span className="text-2xl font-black animate-gradient-text bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent animate-text-shimmer">
+                  KULFY
+                </span>
               </a>
-              <nav className="flex gap-4">
+              <nav className="flex gap-2">
                 <a
                   href="/upload"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm rounded-full font-semibold hover:shadow-md hover:shadow-pink-500/30 transition-all duration-300"
                 >
                   Upload
                 </a>
                 <a
                   href="/feed"
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 text-purple-600 dark:text-purple-400 text-sm rounded-full font-semibold hover:bg-purple-50 dark:hover:bg-gray-800 transition-all duration-300"
                 >
                   Feed
+                </a>
+                <a
+                  href="/admin"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm rounded-full font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300"
+                >
+                  Admin
                 </a>
               </nav>
             </div>

@@ -1,16 +1,18 @@
 import React from 'react';
+import { ImageLoader } from './image-loader';
 
 interface CardProps {
   imageUrl: string;
   title?: string;
   alt?: string;
+  postId?: string;
 }
 
-export function Card({ imageUrl, title, alt = 'Kulfy meme' }: CardProps) {
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      <div className="relative w-full aspect-square">
-        <img
+export function Card({ imageUrl, title, alt = 'Kulfy meme', postId }: CardProps) {
+  const content = (
+    <>
+      <div className="relative w-full aspect-square overflow-hidden bg-gray-900">
+        <ImageLoader
           src={imageUrl}
           alt={alt}
           loading="lazy"
@@ -24,6 +26,23 @@ export function Card({ imageUrl, title, alt = 'Kulfy meme' }: CardProps) {
           </p>
         </div>
       )}
+    </>
+  );
+
+  if (postId) {
+    return (
+      <a
+        href={`/kulfy/${postId}`}
+        className="block bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      {content}
     </div>
   );
 }
