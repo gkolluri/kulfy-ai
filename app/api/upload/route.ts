@@ -10,6 +10,7 @@ export const runtime = 'nodejs';
 // Validation schema
 const uploadSchema = z.object({
   title: z.string().max(140).optional(),
+  sourceUrl: z.string().url().optional().or(z.literal('')),
   file: z.object({
     type: z.enum(['image/png', 'image/jpeg', 'image/webp', 'image/gif']),
     size: z.number().max(6 * 1024 * 1024), // 6MB max
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
     // Parse multipart form data
     const formData = await request.formData();
     const title = formData.get('title') as string | null;
+    const sourceUrl = formData.get('sourceUrl') as string | null;
     const file = formData.get('file') as File | null;
 
     if (!file) {
@@ -33,6 +35,7 @@ export async function POST(request: NextRequest) {
     // Validate file
     const validation = uploadSchema.safeParse({
       title: title || undefined,
+      sourceUrl: sourceUrl || undefined,
       file: {
         type: file.type,
         size: file.size,
@@ -69,6 +72,7 @@ export async function POST(request: NextRequest) {
       mime: file.type,
       userId: user._id,
       status: 'PENDING',
+      sourceUrl: sourceUrl || undefined,
     });
 
     console.log(`[UPLOAD] Post created with ID: ${post._id}, status: ${post.status}`);
