@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: kulfy-agent
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: KULFY_UPLOAD_URL
+        value: https://kulfy-ai.vercel.app/api/upload
+      - key: HOST
+        value: 0.0.0.0
+
