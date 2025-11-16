@@ -1,5 +1,8 @@
 # Python virtual environment
 venv/
+
+# Temporary meme storage
+temp_memes/
 __pycache__/
 *.py[cod]
 *$py.class
