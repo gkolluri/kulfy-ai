@@ -355,11 +355,6 @@ def generate_images(state: AgentState) -> AgentState:
     log("\n🎨 [DALLE] Generating cartoon images...", 'info', 'Generating images')
     log(f"   🎯 Will create {len(state['meme_concepts'])} memes")
     
-    # Create local directory for memes
-    local_meme_dir = "/Users/kolluri/Documents/kulfy/memes"
-    os.makedirs(local_meme_dir, exist_ok=True)
-    print(f"   📁 Local storage: {local_meme_dir}")
-    
     generated_images = []
     upload_url = os.getenv("KULFY_UPLOAD_URL", "http://localhost:3000/api/upload")
     upload_results = []
@@ -407,24 +402,12 @@ Make it funny and exaggerated!"""
             image_data = img_response.content
             log(f"   ✅ Image downloaded ({len(image_data) // 1024} KB)", 'success')
             
-            # Save to local disk
-            import re
-            safe_title = re.sub(r'[^\w\s-]', '', concept.get('title', f'meme_{i}')).strip().replace(' ', '_')
-            filename = f"{i:02d}_{safe_title}.png"
-            filepath = os.path.join(local_meme_dir, filename)
-            
-            log(f"   💾 Saving to: {filename}...")
-            with open(filepath, 'wb') as f:
-                f.write(image_data)
-            log(f"   ✅ Saved locally!", 'success')
-            
             generated_images.append({
                 'concept': concept,
                 'image_url': image_url,
                 'image_data': image_data,
                 'mime': 'image/png',
                 'title': concept.get('title', f'Telugu Meme {i}'),
-                'local_path': filepath,
                 'source_url': state['scraped_content'][0]['url'] if state.get('scraped_content') and len(state['scraped_content']) > 0 else None,
             })
             
@@ -461,7 +444,6 @@ Make it funny and exaggerated!"""
                         'title': concept.get('title', f'Telugu Meme {i}'),
                         'cid': result.get('cid'),
                         'id': result.get('id'),
-                        'local_path': filepath,
                     })
                     log(f"   ✅ Upload successful!", 'success')
                     log(f"   🔗 CID: {result.get('cid', 'N/A')[:20]}...")
@@ -473,7 +455,6 @@ Make it funny and exaggerated!"""
                         'success': False,
                         'title': concept.get('title', f'Telugu Meme {i}'),
                         'error': error_msg,
-                        'local_path': filepath,
                     })
                     state['errors'].append(error_msg)
                     
@@ -484,7 +465,6 @@ Make it funny and exaggerated!"""
                     'success': False,
                     'title': concept.get('title', f'Telugu Meme {i}'),
                     'error': error_msg,
-                    'local_path': filepath,
                 })
                 state['errors'].append(error_msg)
             
