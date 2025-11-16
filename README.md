@@ -16,18 +16,20 @@ Kulfy is a decentralized meme sharing platform where users upload images stored 
 
 1. [Features](#-features)
 2. [Tech Stack](#-tech-stack)
-3. [Quick Start](#-quick-start-5-minutes)
-4. [Detailed Setup](#-detailed-setup)
-5. [Project Structure](#-project-structure)
-6. [Data Model](#-data-model)
-7. [API Endpoints](#-api-endpoints)
-8. [Auto-Reload Setup](#-auto-reload-setup)
-9. [Testing](#-testing-the-application)
-10. [Deployment](#-deployment-to-vercel)
-11. [Troubleshooting](#-troubleshooting)
-12. [Project Status](#-project-status)
-13. [Roadmap](#-roadmap-week-2)
-14. [Contributing](#-contributing)
+3. [AI Meme Generation Agent](#-ai-meme-generation-agent)
+4. [AI Chat Interface (kulfy-chat)](#-ai-chat-interface-kulfy-chat)
+5. [Quick Start](#-quick-start-5-minutes)
+6. [Detailed Setup](#-detailed-setup)
+7. [Project Structure](#-project-structure)
+8. [Data Model](#-data-model)
+9. [API Endpoints](#-api-endpoints)
+10. [Auto-Reload Setup](#-auto-reload-setup)
+11. [Testing](#-testing-the-application)
+12. [Deployment](#-deployment-to-vercel)
+13. [Troubleshooting](#-troubleshooting)
+14. [Project Status](#-project-status)
+15. [Roadmap](#-roadmap-week-2)
+16. [Contributing](#-contributing)
 
 ---
 
@@ -39,6 +41,7 @@ Kulfy is a decentralized meme sharing platform where users upload images stored 
 - ✅ **Auto-Moderation** - Stub moderation system (ready for AI integration)
 - ✅ **Auto-Tagging** - Automatic tag generation (ready for vision AI integration)
 - ✅ **Public Feed** - Browse approved memes in a responsive grid layout
+- ✅ **AI Chat Interface** - ChatGPT-like chat experience powered by [assistant-ui](https://github.com/assistant-ui/assistant-ui) (7.3k+ stars)
 - ✅ **Type-Safe** - Full TypeScript implementation with Zod validation
 - ✅ **Auto-Reload** - Nodemon setup for automatic server restart on env changes
 - ✅ **Dark Mode** - Full dark mode support with Tailwind CSS
@@ -57,6 +60,7 @@ Kulfy is a decentralized meme sharing platform where users upload images stored 
 | **Validation** | Zod |
 | **Language** | TypeScript |
 | **AI Agent** | LangGraph, GPT-4, DALL-E 3, FastAPI (Python) |
+| **Chat UI** | [assistant-ui](https://github.com/assistant-ui/assistant-ui) - TypeScript/React library for AI chat |
 | **Dev Tools** | ESLint, Nodemon, PostCSS, Autoprefixer |
 
 ---
@@ -101,6 +105,81 @@ curl -X POST http://localhost:8000/generate-memes
 
 - **POST** `/api/agent/generate-memes` - Trigger meme generation
 - **GET** `/api/agent/generate-memes` - Check agent status
+
+---
+
+## 💬 AI Chat Interface (kulfy-chat)
+
+Kulfy includes a ChatGPT-like chat interface built with [assistant-ui](https://github.com/assistant-ui/assistant-ui), an actively maintained open-source library with 7.3k+ GitHub stars and 2,242+ commits.
+
+### Features
+
+- ✅ **ChatGPT-like UX** - Production-grade AI chat experience
+- ✅ **Streaming Support** - Real-time message streaming
+- ✅ **Thread Management** - Organize conversations into threads
+- ✅ **Markdown Rendering** - Rich text and code highlighting
+- ✅ **Composable Components** - Fully customizable UI primitives
+- ✅ **Multiple AI Models** - Supports OpenAI, Anthropic, and more
+- ✅ **Accessibility** - Built-in keyboard shortcuts and a11y support
+
+### Setup
+
+The chat interface is located in the `kulfy-chat/` directory:
+
+```bash
+# Navigate to chat directory
+cd kulfy-chat
+
+# Install dependencies
+npm install
+
+# Add OpenAI API key to .env.local
+echo "OPENAI_API_KEY=sk-your-key-here" > .env.local
+
+# Start development server
+npm run dev
+```
+
+The chat interface will be available at `http://localhost:3000` (or the configured port).
+
+### Tech Stack
+
+- **UI Library**: [@assistant-ui/react](https://github.com/assistant-ui/assistant-ui) v0.11.28
+- **AI SDK**: Vercel AI SDK with OpenAI adapter
+- **Components**: Radix UI primitives (Avatar, Dialog, Tooltip, etc.)
+- **Styling**: Tailwind CSS v4
+- **Markdown**: React Markdown with syntax highlighting
+
+### Project Structure
+
+```
+kulfy-chat/
+├── app/
+│   ├── api/
+│   │   └── chat/
+│   │       └── route.ts          # Chat API endpoint
+│   ├── assistant.tsx             # Main assistant component
+│   ├── page.tsx                  # Chat page
+│   └── layout.tsx                # Layout with sidebar
+├── components/
+│   ├── assistant-ui/            # Custom assistant-ui components
+│   │   ├── attachment.tsx
+│   │   ├── markdown-text.tsx
+│   │   ├── thread-list.tsx
+│   │   └── thread.tsx
+│   └── ui/                       # shadcn/ui style components
+│       ├── avatar.tsx
+│       ├── button.tsx
+│       └── sidebar.tsx
+└── lib/
+    └── utils.ts                  # Utility functions
+```
+
+### Documentation
+
+- **assistant-ui Docs**: https://www.assistant-ui.com
+- **GitHub Repository**: https://github.com/assistant-ui/assistant-ui
+- **Community**: Join the [Discord](https://discord.gg/assistant-ui) for support
 
 ---
 
@@ -229,17 +308,30 @@ Visit http://localhost:3000 🎉
 
 ```
 kulfy-ai/
-├── app/
+├── app/                          # Main Next.js app
 │   ├── api/
 │   │   ├── upload/route.ts       # POST: Upload images to IPFS
 │   │   └── agent/
 │   │       └── run/route.ts      # GET: Run moderation agent
 │   ├── upload/page.tsx           # Upload form UI (client)
 │   ├── feed/page.tsx             # Feed display (server)
+│   ├── generate/page.tsx         # AI meme generation UI
 │   ├── page.tsx                  # Home page
 │   └── layout.tsx                # Root layout with nav
 ├── components/
 │   └── card.tsx                  # Image card component
+├── kulfy-agent/                  # Python AI agent (FastAPI)
+│   ├── agent.py                  # LangGraph agent logic
+│   ├── main.py                   # FastAPI server
+│   └── requirements.txt          # Python dependencies
+├── kulfy-chat/                   # AI Chat interface (assistant-ui)
+│   ├── app/
+│   │   ├── api/chat/route.ts      # Chat API endpoint
+│   │   └── assistant.tsx         # Main chat component
+│   ├── components/
+│   │   ├── assistant-ui/         # Custom chat components
+│   │   └── ui/                   # UI primitives
+│   └── package.json              # Chat dependencies
 ├── lib/
 │   ├── db.ts                     # MongoDB connection (singleton)
 │   ├── pinata.ts                 # Pinata IPFS helpers
