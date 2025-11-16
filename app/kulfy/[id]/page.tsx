@@ -19,6 +19,7 @@ interface PostDetail {
   width?: number;
   height?: number;
   status: string;
+  sourceUrl?: string;
   createdAt: Date;
   user: {
     handle: string;
@@ -41,11 +42,11 @@ async function getPost(id: string): Promise<PostDetail | null> {
     }
 
     const queryStart = Date.now();
-    const post = await Post.findById(id)
-      .populate('userId', 'handle')
-      .populate('tags', 'name')
-      .select('cid title mime width height status createdAt userId tags')
-      .lean();
+        const post = await Post.findById(id)
+          .populate('userId', 'handle')
+          .populate('tags', 'name')
+          .select('cid title mime width height status sourceUrl createdAt userId tags')
+          .lean();
     console.log(`[PERF] DB query: ${Date.now() - queryStart}ms`);
 
     if (!post || post.status !== 'APPROVED') {
@@ -63,6 +64,7 @@ async function getPost(id: string): Promise<PostDetail | null> {
       width: populatedPost.width,
       height: populatedPost.height,
       status: populatedPost.status,
+      sourceUrl: populatedPost.sourceUrl,
       createdAt: populatedPost.createdAt,
       user: {
         handle: populatedPost.userId?.handle || 'anonymous',
@@ -184,22 +186,39 @@ export default async function KulfyDetailPage({ params }: { params: Promise<{ id
               )}
             </div>
 
-            {/* Tags */}
-            {post.tags.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-400 mb-2">Tags</h3>
-                <div className="flex flex-wrap gap-2">
-                  {post.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-sm border border-purple-500/50"
+                {/* Source URL */}
+                {post.sourceUrl && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Inspired By</h3>
+                    <a
+                      href={post.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/30 text-blue-200 rounded-lg text-sm border border-blue-500/50 hover:bg-blue-600/50 transition-colors"
                     >
-                      #{tag.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+                      <span>🔗</span>
+                      <span className="truncate max-w-md">{post.sourceUrl}</span>
+                      <span className="text-xs opacity-70">↗</span>
+                    </a>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {post.tags.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-400 mb-2">Tags</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {post.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-purple-600/30 text-purple-200 rounded-full text-sm border border-purple-500/50"
+                        >
+                          #{tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
             {/* Share Buttons */}
             <div className="border-t border-white/10 pt-6">

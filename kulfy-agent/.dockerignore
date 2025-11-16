@@ -1,0 +1,22 @@
+# Don't copy these to Docker image
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.env
+.env.local
+.git/
+.gitignore
+*.log
+.DS_Store
+README.md
+DEPLOYMENT.md
+server.log
+

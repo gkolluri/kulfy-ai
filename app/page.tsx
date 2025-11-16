@@ -35,6 +35,13 @@ export default function HomePage() {
           </a>
           
           <a
+            href="/generate"
+            className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full font-bold text-white text-lg shadow-2xl hover:shadow-green-500/50 transform hover:scale-105 transition-all duration-300"
+          >
+            🤖 AI Generate
+          </a>
+          
+          <a
             href="/upload"
             className="px-8 py-4 bg-white/10 backdrop-blur-lg border-2 border-white/30 rounded-full font-bold text-white text-lg hover:bg-white/20 hover:border-white/50 transform hover:scale-105 transition-all duration-300 shadow-2xl"
           >

@@ -13,6 +13,7 @@ export interface IPost extends Document {
   status: PostStatus;
   notes?: string;
   tags: mongoose.Types.ObjectId[];
+  sourceUrl?: string;
   createdAt: Date;
 }
 
@@ -56,6 +57,10 @@ const PostSchema = new Schema<IPost>({
     type: Schema.Types.ObjectId,
     ref: 'Tag',
   }],
+  sourceUrl: {
+    type: String,
+    trim: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -55,6 +55,12 @@ export default function RootLayout({
                 >
                   Feed
                 </a>
+                <a
+                  href="/generate"
+                  className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm rounded-full font-semibold hover:shadow-md hover:shadow-green-500/30 transition-all duration-300"
+                >
+                  🤖 AI
+                </a>
               </nav>
             </div>
           </div>

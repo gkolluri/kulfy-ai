@@ -56,7 +56,51 @@ Kulfy is a decentralized meme sharing platform where users upload images stored 
 | **Storage** | Pinata (IPFS) |
 | **Validation** | Zod |
 | **Language** | TypeScript |
+| **AI Agent** | LangGraph, GPT-4, DALL-E 3, FastAPI (Python) |
 | **Dev Tools** | ESLint, Nodemon, PostCSS, Autoprefixer |
+
+---
+
+## 🤖 AI Meme Generation Agent
+
+Kulfy includes an AI-powered agent that automatically generates Telugu memes using LangGraph, GPT-4, and DALL-E 3.
+
+### How It Works
+
+1. **Scrapes** greatandhra.com for latest Telugu entertainment news
+2. **Analyzes** content with GPT-4 to find meme-worthy topics
+3. **Generates** 5 cartoon-style meme concepts with English text + Telugu context
+4. **Creates** images using DALL-E 3
+5. **Uploads** memes to Kulfy app (status: PENDING for moderation)
+
+### Setup
+
+See [`kulfy-agent/README.md`](./kulfy-agent/README.md) for detailed setup instructions.
+
+**Quick Start:**
+
+```bash
+# Install Python dependencies
+cd kulfy-agent
+pip install -r requirements.txt
+
+# Configure OpenAI key
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+
+# Start agent service
+uvicorn main:app --reload --port 8000
+
+# Trigger meme generation (from another terminal)
+curl -X POST http://localhost:8000/generate-memes
+```
+
+**Cost**: ~$0.25 per run (5 memes)
+
+### API Endpoints
+
+- **POST** `/api/agent/generate-memes` - Trigger meme generation
+- **GET** `/api/agent/generate-memes` - Check agent status
 
 ---
 
