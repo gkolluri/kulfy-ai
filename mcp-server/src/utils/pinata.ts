@@ -61,7 +61,7 @@ export async function pinFileToPinata(
       throw new Error(`Pinata upload failed: ${response.status} - ${errorText}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as { IpfsHash?: string; cid?: string };
     const cid = result.IpfsHash || result.cid;
     
     if (!cid) {
