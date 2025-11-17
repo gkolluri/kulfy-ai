@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { KulfyIcon } from '@/components/kulfy-icon';
+import { MobileMenu } from '@/components/mobile-menu';
 import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import '../styles/globals.css';
 
@@ -42,7 +43,16 @@ export default function RootLayout({
                   KULFY
                 </span>
               </a>
-              <nav className="flex gap-2">
+              {/* Desktop Navigation */}
+              <nav className="hidden md:flex gap-2">
+                <a
+                  href={process.env.NEXT_PUBLIC_KULFY_CHAT_URL || "http://localhost:6001"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm rounded-full font-semibold hover:shadow-md hover:shadow-cyan-500/30 transition-all duration-300"
+                >
+                  ✨ Create Kulfy
+                </a>
                 <a
                   href="/upload"
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm rounded-full font-semibold hover:shadow-md hover:shadow-pink-500/30 transition-all duration-300"
@@ -62,6 +72,9 @@ export default function RootLayout({
                   🤖 AI
                 </a>
               </nav>
+              
+              {/* Mobile Menu */}
+              <MobileMenu />
             </div>
           </div>
         </header>
