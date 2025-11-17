@@ -27,7 +27,7 @@ export default function HomePage() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up delay-300">
           <a
-            href={process.env.NEXT_PUBLIC_KULFY_CHAT_URL || "http://localhost:6001"}
+            href={process.env.NEXT_PUBLIC_KULFY_CHAT_URL || "https://kulfy-chat.vercel.app/"}
             target="_blank"
             rel="noopener noreferrer"
             className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full font-bold text-white text-lg shadow-2xl hover:shadow-cyan-500/50 transform hover:scale-105 transition-all duration-300 overflow-hidden"
