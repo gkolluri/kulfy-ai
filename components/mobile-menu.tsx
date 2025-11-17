@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-const kulfyChatUrl = process.env.NEXT_PUBLIC_KULFY_CHAT_URL || "http://localhost:6001";
+const kulfyChatUrl = process.env.NEXT_PUBLIC_KULFY_CHAT_URL || "https://kulfy-chat.vercel.app/";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);

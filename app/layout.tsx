@@ -46,7 +46,7 @@ export default function RootLayout({
               {/* Desktop Navigation */}
               <nav className="hidden md:flex gap-2">
                 <a
-                  href={process.env.NEXT_PUBLIC_KULFY_CHAT_URL || "http://localhost:6001"}
+                  href={process.env.NEXT_PUBLIC_KULFY_CHAT_URL || "https://kulfy-chat.vercel.app/"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm rounded-full font-semibold hover:shadow-md hover:shadow-cyan-500/30 transition-all duration-300"
