@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 import asyncio
 from datetime import datetime
 
-from agent import run_meme_generation
+from agent import run_meme_generation, run_meme_generation_concepts_only
 
 # Load environment variables
 load_dotenv()
@@ -58,10 +58,12 @@ generation_status = {
 
 def update_generation_status(log_type: str, message: str, step: str = None):
     """Callback to update generation status with logs"""
-    generation_status['logs'].append({'type': log_type, 'message': message})
+    generation_status['logs'].append({'type': log_type, 'message': message, 'timestamp': datetime.now().isoformat()})
     if step:
         generation_status['current_step'] = step
-    print(message)  # Also print to terminal
+    # Print to terminal with timestamp for better visibility
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    print(f"[{timestamp}] [{log_type.upper()}] {message}")
 
 
 # ============================================================================
@@ -73,6 +75,12 @@ class GenerateMemesRequest(BaseModel):
     count: Optional[int] = 5  # Number of memes to generate
     urls: Optional[List[str]] = None  # URLs to fetch content from
     webhook_url: Optional[str] = None  # Optional webhook to notify on completion
+    custom_prompts: Optional[List[Dict[str, str]]] = None  # Custom prompts for phase 2 (visual_description, text_overlay)
+
+
+class GenerateConceptsRequest(BaseModel):
+    """Request model for concept generation only (phase 1)"""
+    urls: Optional[List[str]] = None  # URLs to fetch content from
 
 
 class GenerateMemesResponse(BaseModel):
@@ -129,6 +137,80 @@ async def get_status():
         "last_result": generation_status['last_result'],
         "logs": generation_status.get('logs', []),
         "current_step": generation_status.get('current_step', ''),
+        "log_count": len(generation_status.get('logs', [])),
+    }
+
+@app.get("/logs")
+async def get_logs():
+    """Get all logs from the current/last generation run"""
+    return {
+        "logs": generation_status.get('logs', []),
+        "current_step": generation_status.get('current_step', ''),
+        "is_running": generation_status['is_running'],
+        "last_run": generation_status['last_run'],
+    }
+
+
+@app.post("/generate-concepts")
+async def generate_concepts(
+    request: GenerateConceptsRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Phase 1: Generate meme concepts and DALL-E prompts only.
+    User can review and edit prompts before image generation.
+    """
+    if generation_status['is_running']:
+        return {
+            "success": False,
+            "message": "Generation already in progress. Please wait.",
+            "status": "busy",
+        }
+    
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(
+            status_code=500,
+            detail="OpenAI API key not configured"
+        )
+    
+    generation_status['is_running'] = True
+    generation_status['last_run'] = datetime.now().isoformat()
+    generation_status['logs'] = []
+    generation_status['current_step'] = 'Generating concepts...'
+    
+    async def run_concepts_task():
+        try:
+            result = await run_meme_generation_concepts_only(
+                urls=request.urls,
+                status_callback=update_generation_status
+            )
+            
+            generation_status['last_result'] = {
+                'success': True,
+                'completed_at': datetime.now().isoformat(),
+                'concepts': result,
+            }
+            generation_status['current_step'] = 'Concepts ready for review!'
+        except Exception as e:
+            error_message = f"❌ Concept generation failed: {str(e)}"
+            print(f"\n{error_message}")
+            generation_status['logs'].append({'type': 'error', 'message': error_message})
+            generation_status['last_result'] = {
+                'success': False,
+                'completed_at': datetime.now().isoformat(),
+                'error': str(e),
+            }
+            generation_status['current_step'] = 'Failed'
+        finally:
+            generation_status['is_running'] = False
+    
+    background_tasks.add_task(run_concepts_task)
+    
+    return {
+        "success": True,
+        "message": "Concept generation started! This will take 30-60 seconds.",
+        "job_id": generation_status['last_run'],
+        "status": "running",
     }
 
 
@@ -200,7 +282,11 @@ async def run_generation_task(request: GenerateMemesRequest):
         generation_status['current_step'] = 'Fetching content...'
         
         # Run the agent with status callback
-        result = await run_meme_generation(urls=request.urls, status_callback=update_generation_status)
+        result = await run_meme_generation(
+            urls=request.urls,
+            status_callback=update_generation_status,
+            custom_prompts=request.custom_prompts
+        )
         
         # Store result
         generation_status['last_result'] = {

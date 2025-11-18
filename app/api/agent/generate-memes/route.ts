@@ -25,6 +25,11 @@ const KULFY_AGENT_URL = process.env.KULFY_AGENT_URL || 'http://localhost:8001';
 interface GenerateMemesRequest {
   count?: number;
   urls?: string[];
+  custom_prompts?: Array<{
+    title?: string;
+    text_overlay: string;
+    visual_description: string;
+  }>;
 }
 
 interface GenerateMemesResponse {
@@ -43,8 +48,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as GenerateMemesRequest;
     const count = body.count || 5;
     const urls = body.urls || [];
+    const custom_prompts = body.custom_prompts;
 
     console.log(`[GENERATE_MEMES] Triggering Kulfy agent for ${count} memes with ${urls.length} URLs...`);
+    if (custom_prompts) {
+      console.log(`[GENERATE_MEMES] Using ${custom_prompts.length} custom prompts`);
+    }
 
     // Call Kulfy Agent FastAPI service
     const response = await fetch(`${KULFY_AGENT_URL}/generate-memes`, {
@@ -52,7 +61,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ count, urls }),
+      body: JSON.stringify({ count, urls, custom_prompts }),
       // No timeout here - let Vercel's maxDuration handle it
     });
 
