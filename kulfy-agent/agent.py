@@ -22,12 +22,41 @@ from langchain_core.messages import HumanMessage
 import aiohttp
 import asyncio
 from dotenv import load_dotenv
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Enable verbose logging for LangChain/LangGraph
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Console output
+        logging.FileHandler('langchain.log', mode='a')  # File output
+    ]
+)
+
+# Create logger for this module (must be created before using it)
+logger = logging.getLogger(__name__)
+
+# Set LangChain to verbose mode (only if LANGCHAIN_API_KEY is set)
+# LangSmith tracing is optional - only enable if API key is configured
+if os.getenv('LANGCHAIN_API_KEY'):
+    os.environ['LANGCHAIN_TRACING_V2'] = 'true'
+    logger.info("LangSmith tracing enabled (LANGCHAIN_API_KEY found)")
+else:
+    os.environ['LANGCHAIN_TRACING_V2'] = 'false'
+    logger.info("LangSmith tracing disabled (no LANGCHAIN_API_KEY)")
+
+# Always enable verbose mode for local debugging
+os.environ['LANGCHAIN_VERBOSE'] = 'true'
+
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+logger.info("="*60)
+logger.info("🎭 KULFY MEME GENERATION AGENT - LANGCHAIN LOGGING ENABLED")
+logger.info("="*60)
 
 
 class AgentState(TypedDict):
@@ -91,28 +120,66 @@ def fetch_content_from_urls(state: AgentState) -> AgentState:
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Try to extract title
-            title = None
-            for selector in ['h1', 'h2', '.article-title', '.post-title', 'title']:
-                element = soup.select_one(selector)
-                if element:
-                    title = element.get_text(strip=True)
-                    if len(title) > 10:
-                        break
+            # DEBUG: Show raw HTML structure
+            print(f"\n🔍 [DEBUG] Parsing URL: {url}")
             
-            # Try to extract main content
+            # Try to extract title - improved selectors
+            title = None
+            title_selectors = [
+                'h1.article-title',
+                'h1.entry-title', 
+                'h1[itemprop="headline"]',
+                'meta[property="og:title"]',
+                'h1',
+                'h2.title',
+                '.article-title',
+                '.post-title',
+                'title'
+            ]
+            
+            for selector in title_selectors:
+                if selector.startswith('meta'):
+                    element = soup.select_one(selector)
+                    if element and element.get('content'):
+                        title = element.get('content')
+                        print(f"   ✅ Title found via {selector}: {title[:60]}...")
+                        break
+                else:
+                    element = soup.select_one(selector)
+                    if element:
+                        title = element.get_text(strip=True)
+                        if len(title) > 10 and not title.lower().startswith(('home', 'menu', 'skip')):
+                            print(f"   ✅ Title found via {selector}: {title[:60]}...")
+                            break
+            
+            # Try to extract main content - improved selectors
             content = ''
-            for selector in ['article', '.article-content', '.post-content', '.entry-content', 'main', 'p']:
+            content_selectors = [
+                'div[itemprop="articleBody"]',
+                'article.post-content',
+                'div.article-content',
+                '.entry-content',
+                'article',
+                '.post-content',
+                'main article'
+            ]
+            
+            for selector in content_selectors:
                 elements = soup.select(selector)
                 if elements:
-                    content = ' '.join([el.get_text(strip=True) for el in elements[:5]])
-                    if len(content) > 100:
-                        break
+                    # Get text from all paragraphs within the content
+                    paragraphs = elements[0].find_all('p')
+                    if paragraphs:
+                        content = ' '.join([p.get_text(strip=True) for p in paragraphs[:10]])
+                        if len(content) > 100:
+                            print(f"   ✅ Content found via {selector}: {len(content)} chars")
+                            break
             
             # Extract all paragraphs as fallback
             if len(content) < 100:
                 paragraphs = soup.find_all('p')
                 content = ' '.join([p.get_text(strip=True) for p in paragraphs[:10]])
+                print(f"   ⚠️  Using fallback paragraph extraction: {len(content)} chars")
             
             if title or content:
                 articles.append({
@@ -169,6 +236,14 @@ def generate_meme_concepts(state: AgentState) -> AgentState:
     
     log("🧠 [ANALYZE] Generating meme concepts with GPT-4...", 'info', 'Analyzing content')
     
+    # Verify OpenAI API key
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise Exception("OPENAI_API_KEY environment variable is not set!")
+    if not api_key.startswith("sk-"):
+        raise Exception("OPENAI_API_KEY appears to be invalid (should start with 'sk-')")
+    print(f"   ✅ OpenAI API Key configured: {api_key[:10]}...{api_key[-4:]}")
+    
     try:
         # Prepare content summary
         log("   📝 Preparing content summary from fetched articles...")
@@ -177,6 +252,18 @@ def generate_meme_concepts(state: AgentState) -> AgentState:
             for article in state['scraped_content'][:10]
         ])
         log(f"   ✅ Content summary prepared ({len(state['scraped_content'])} articles)", 'success')
+        
+        # DEBUG: Show what content is being sent to GPT-4
+        print("\n" + "="*60)
+        print("🔍 [DEBUG] Content being sent to GPT-4:")
+        print("="*60)
+        for i, article in enumerate(state['scraped_content'][:10], 1):
+            print(f"\n📄 Article {i}:")
+            print(f"   Title: {article['title']}")
+            print(f"   URL: {article.get('url', 'N/A')}")
+            print(f"   Snippet length: {len(article['snippet'])} chars")
+            print(f"   Snippet preview: {article['snippet'][:200]}...")
+        print("="*60 + "\n")
         
         prompt = f"""Based on the following Telugu news/entertainment headlines, create 5 hilarious meme concepts.
 
@@ -215,15 +302,26 @@ OUTPUT FORMAT (JSON):
 
 Generate exactly 5 meme concepts as a JSON array. Ensure ALL text has correct spelling and grammar."""
 
+        # DEBUG: Show the full prompt being sent
+        print("\n" + "="*60)
+        print("🔍 [DEBUG] Full GPT-4 Prompt:")
+        print("="*60)
+        print(prompt)
+        print("="*60 + "\n")
+
         log("   🤖 Calling GPT-4 API (this may take 30-60 seconds)...", 'info', 'GPT-4 analyzing')
         log("   ⏳ Please wait while AI analyzes content and generates meme concepts...")
         
-        response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=[
-                {
-                    "role": "system", 
-                    "content": """You are an expert Telugu meme creator specializing in content for young Telugu audiences (20-40 years old).
+        try:
+            import time
+            start_time = time.time()
+            
+            response = client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": """You are an expert Telugu meme creator specializing in content for young Telugu audiences (20-40 years old).
 
 Your memes are:
 - Witty and culturally relevant to modern Telugu youth
@@ -233,12 +331,21 @@ Your memes are:
 - Shareable on social media platforms
 
 Focus on native Telugu appeal - not generic Indian content. The humor should resonate specifically with Telugu-speaking millennials and Gen Z who are bilingual, tech-savvy, and consume both Telugu and English content."""
-                },
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.8,  # Balanced creativity with coherence
-            response_format={"type": "json_object"}
-        )
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.8,  # Balanced creativity with coherence
+                response_format={"type": "json_object"},
+                timeout=90.0  # 90 second timeout
+            )
+            
+            elapsed_time = time.time() - start_time
+            log(f"   ⏱️  GPT-4 API call took {elapsed_time:.1f} seconds", 'info')
+            
+        except Exception as api_error:
+            error_msg = f"GPT-4 API call failed: {str(api_error)}"
+            print(f"   ❌ {error_msg}")
+            raise Exception(error_msg)
         
         log("   ✅ GPT-4 response received! Parsing meme concepts...", 'success')
         
@@ -340,11 +447,16 @@ Focus on native Telugu appeal - not generic Indian content. The humor should res
 # NODE 3: GENERATE IMAGES WITH DALL-E 3
 # ============================================================================
 
-def generate_images(state: AgentState) -> AgentState:
+def generate_images(state: AgentState, custom_prompts: Optional[List[Dict[str, str]]] = None) -> AgentState:
     """
     Creates cartoon-style meme images using DALL-E 3.
     Generates one image per meme concept.
     Saves to local disk and uploads immediately after each generation.
+    
+    Args:
+        state: Agent state with meme concepts
+        custom_prompts: Optional list of custom prompts to override concepts.
+                        Each dict should have 'visual_description' and 'text_overlay'
     """
     callback = state.get('status_callback')
     def log(msg, log_type='info', step=None):
@@ -353,23 +465,33 @@ def generate_images(state: AgentState) -> AgentState:
             callback(log_type, msg, step)
     
     log("\n🎨 [DALLE] Generating cartoon images...", 'info', 'Generating images')
-    log(f"   🎯 Will create {len(state['meme_concepts'])} memes")
+    
+    # Use custom prompts if provided, otherwise use concepts from state
+    concepts_to_use = custom_prompts if custom_prompts else state['meme_concepts']
+    log(f"   🎯 Will create {len(concepts_to_use)} memes")
+    if custom_prompts:
+        log("   ✏️  Using custom/edited prompts from user", 'info')
     
     generated_images = []
     upload_url = os.getenv("KULFY_UPLOAD_URL", "http://localhost:3000/api/upload")
     upload_results = []
     
-    for i, concept in enumerate(state['meme_concepts'], 1):
+    for i, concept in enumerate(concepts_to_use, 1):
         try:
-            log(f"\n   🖼️  Generating image {i}/{len(state['meme_concepts'])}: {concept.get('title', 'Untitled')}", 'info', f'Generating image {i}/5')
-            log(f"   📝 Text overlay: {concept.get('text_overlay', 'N/A')[:60]}...")
+            title = concept.get('title', f'Meme {i}')
+            text_overlay = concept.get('text_overlay', '')
+            visual_desc = concept.get('visual_description', concept.get('title', ''))
+            
+            log(f"\n   🖼️  Generating image {i}/{len(concepts_to_use)}: {title}", 'info', f'Generating image {i}/{len(concepts_to_use)}')
+            log(f"   📝 Text overlay: {text_overlay[:60]}...")
+            log(f"   🎨 Visual description: {visual_desc[:80]}...")
             
             # Craft DALL-E prompt
             dalle_prompt = f"""Create a cartoon-style meme image:
 
-SCENE: {concept.get('visual_description', concept.get('title', ''))}
+SCENE: {visual_desc}
 
-TEXT OVERLAY: "{concept.get('text_overlay', '')}"
+TEXT OVERLAY: "{text_overlay}"
 
 STYLE:
 - Cartoon/comic art style
@@ -536,11 +658,113 @@ def create_meme_agent():
     return app
 
 
+def create_concepts_only_agent():
+    """
+    Creates a LangGraph agent that stops after generating concepts.
+    Used for two-phase generation where user reviews prompts first.
+    """
+    workflow = StateGraph(AgentState)
+    
+    workflow.add_node("fetch", fetch_content_from_urls)
+    workflow.add_node("analyze", generate_meme_concepts)
+    
+    workflow.set_entry_point("fetch")
+    workflow.add_edge("fetch", "analyze")
+    workflow.add_edge("analyze", END)
+    
+    return workflow.compile()
+
+
 # ============================================================================
 # MAIN EXECUTION FUNCTION
 # ============================================================================
 
-async def run_meme_generation(urls: Optional[List[str]] = None, status_callback=None):
+async def run_meme_generation_concepts_only(urls: Optional[List[str]] = None, status_callback=None):
+    """
+    Runs only the concept generation phase (fetch + analyze).
+    Stops before image generation so user can review prompts.
+    
+    Args:
+        urls: Optional list of URLs to fetch content from
+        status_callback: Optional callback function to send status updates
+        
+    Returns concepts with DALL-E prompts ready for review.
+    """
+    def log(message, log_type='info', step=None):
+        """Helper to log and send to callback"""
+        print(message)
+        logger.info(f"[{log_type.upper()}] {message}")
+        if status_callback:
+            status_callback(log_type, message, step)
+    
+    log("\n" + "="*60)
+    log("🎭 KULFY MEME GENERATION - CONCEPTS PHASE")
+    log("="*60 + "\n")
+    
+    if urls:
+        log(f"📰 Using {len(urls)} provided URLs", 'info', 'Fetching content')
+    else:
+        log("📰 No URLs provided, using fallback content", 'info')
+    
+    initial_state = {
+        'input_urls': urls or [],
+        'scraped_content': [],
+        'meme_concepts': [],
+        'generated_images': [],
+        'upload_results': [],
+        'errors': [],
+        'status': 'starting',
+        'status_callback': status_callback
+    }
+    
+    log("🔧 Creating concepts-only agent workflow...", 'info', 'Initializing agent')
+    agent = create_concepts_only_agent()
+    log("✅ Agent workflow created", 'success')
+    
+    log("🚀 Running fetch + analyze phases...", 'info', 'Generating concepts')
+    final_state = agent.invoke(initial_state)
+    
+    log("✅ Concept generation completed", 'success')
+    
+    # Format prompts for DALL-E
+    dalle_prompts = []
+    for concept in final_state.get('meme_concepts', []):
+        visual_desc = concept.get('visual_description', '')
+        text_overlay = concept.get('text_overlay', '')
+        
+        dalle_prompt = f"""Create a cartoon-style meme image:
+
+SCENE: {visual_desc}
+
+TEXT OVERLAY: "{text_overlay}"
+
+STYLE:
+- Cartoon/comic art style
+- Bold, expressive characters
+- Telugu cinema/culture aesthetic
+- Bright colors
+- Suitable for social media meme format
+- Text should be clearly readable
+
+Make it funny and exaggerated!"""
+        
+        dalle_prompts.append({
+            'title': concept.get('title', 'Untitled'),
+            'text_overlay': text_overlay,
+            'visual_description': visual_desc,
+            'context': concept.get('context', ''),
+            'dalle_prompt': dalle_prompt,
+        })
+    
+    return {
+        'status': 'concepts_ready',
+        'concepts': final_state.get('meme_concepts', []),
+        'dalle_prompts': dalle_prompts,
+        'articles_scraped': len(final_state.get('scraped_content', [])),
+    }
+
+
+async def run_meme_generation(urls: Optional[List[str]] = None, status_callback=None, custom_prompts: Optional[List[Dict[str, str]]] = None):
     """
     Runs the entire meme generation pipeline.
     
@@ -553,11 +777,12 @@ async def run_meme_generation(urls: Optional[List[str]] = None, status_callback=
     def log(message, log_type='info', step=None):
         """Helper to log and send to callback"""
         print(message)
+        logger.info(f"[{log_type.upper()}] {message}")
         if status_callback:
             status_callback(log_type, message, step)
     
     log("\n" + "="*60)
-    log("🎭 KULFY MEME GENERATION AGENT")
+    log("🎭 KULFY MEME GENERATION AGENT - LANGCHAIN EXECUTION")
     log("="*60 + "\n")
     
     if urls:
@@ -565,21 +790,71 @@ async def run_meme_generation(urls: Optional[List[str]] = None, status_callback=
     else:
         log("📰 No URLs provided, using fallback content", 'info')
     
-    # Initialize state
-    initial_state = {
-        'input_urls': urls or [],
-        'scraped_content': [],
-        'meme_concepts': [],
-        'generated_images': [],
-        'upload_results': [],
-        'errors': [],
-        'status': 'starting',
-        'status_callback': status_callback  # Pass callback to nodes
-    }
+    # If custom prompts provided, skip concept generation and go straight to images
+    if custom_prompts:
+        log("\n" + "="*60, 'info')
+        log("✏️  DIRECT PROMPT MODE: Bypassing fetch & analyze", 'info', 'Using custom prompts')
+        log("="*60, 'info')
+        log(f"📝 Received {len(custom_prompts)} custom prompt(s) from kulfy-chat", 'info')
+        
+        # DEBUG: Show custom prompts being used
+        print("\n🔍 [DEBUG] Custom Prompts Received from Kulfy Chat:")
+        print("="*60)
+        for i, prompt in enumerate(custom_prompts, 1):
+            print(f"\n📝 Prompt {i}:")
+            print(f"   Title: {prompt.get('title', 'N/A')}")
+            print(f"   Text Overlay: {prompt.get('text_overlay', 'N/A')[:80]}...")
+            print(f"   Visual Desc: {prompt.get('visual_description', 'N/A')[:80]}...")
+        print("="*60 + "\n")
+        
+        log("🎨 Creating simplified workflow: GENERATE_IMAGES only", 'info')
+        
+        initial_state = {
+            'input_urls': urls or [],
+            'scraped_content': [{'title': 'Custom', 'snippet': 'User-provided prompts', 'url': ''}],
+            'meme_concepts': custom_prompts,  # Use custom prompts as concepts
+            'generated_images': [],
+            'upload_results': [],
+            'errors': [],
+            'status': 'concepts_ready',
+            'status_callback': status_callback
+        }
+        
+        # Create a simplified workflow that just generates images
+        workflow = StateGraph(AgentState)
+        workflow.add_node("generate_images", lambda s: generate_images(s, custom_prompts))
+        workflow.set_entry_point("generate_images")
+        workflow.add_edge("generate_images", END)
+        agent = workflow.compile()
+        log("✅ Simplified workflow created - going straight to DALL-E 3", 'success')
+    else:
+        # Normal flow: fetch -> analyze -> generate -> upload
+        initial_state = {
+            'input_urls': urls or [],
+            'scraped_content': [],
+            'meme_concepts': [],
+            'generated_images': [],
+            'upload_results': [],
+            'errors': [],
+            'status': 'starting',
+            'status_callback': status_callback
+        }
+        
+        log("🔧 Creating LangGraph agent workflow...", 'info', 'Initializing agent')
+        agent = create_meme_agent()
+        log("✅ Agent workflow created", 'success')
     
-    # Create and run agent
-    agent = create_meme_agent()
+    log("🚀 Invoking LangGraph agent (this will show detailed LangChain execution)...", 'info', 'Running agent')
+    logger.info("="*60)
+    logger.info("LANGGRAPH AGENT INVOCATION START")
+    logger.info("="*60)
+    
     final_state = agent.invoke(initial_state)
+    
+    logger.info("="*60)
+    logger.info("LANGGRAPH AGENT INVOCATION COMPLETE")
+    logger.info("="*60)
+    log("✅ LangGraph agent execution completed", 'success')
     
     # Prepare summary
     summary = {
