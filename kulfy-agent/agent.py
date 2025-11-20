@@ -472,6 +472,16 @@ def generate_images(state: AgentState, custom_prompts: Optional[List[Dict[str, s
     if custom_prompts:
         log("   ✏️  Using custom/edited prompts from user", 'info')
     
+<<<<<<< Updated upstream
+=======
+    # Create temporary directory for memes (in project folder)
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    local_meme_dir = os.path.join(script_dir, "temp_memes")
+    os.makedirs(local_meme_dir, exist_ok=True)
+    log(f"   📁 Temporary storage: {local_meme_dir}")
+    
+>>>>>>> Stashed changes
     generated_images = []
     upload_url = os.getenv("KULFY_UPLOAD_URL", "http://localhost:3000/api/upload")
     upload_results = []
@@ -570,6 +580,13 @@ Make it funny and exaggerated!"""
                     log(f"   ✅ Upload successful!", 'success')
                     log(f"   🔗 CID: {result.get('cid', 'N/A')[:20]}...")
                     log(f"   🆔 Post ID: {result.get('id', 'N/A')}")
+                    
+                    # Delete local file after successful upload
+                    try:
+                        os.remove(filepath)
+                        log(f"   🗑️  Deleted local file: {filename}")
+                    except Exception as delete_error:
+                        log(f"   ⚠️  Could not delete file: {delete_error}")
                 else:
                     error_msg = f"Upload failed with status {upload_response.status_code}"
                     print(f"   ❌ {error_msg}")
@@ -594,6 +611,14 @@ Make it funny and exaggerated!"""
             error_msg = f"Image {i} generation failed: {str(e)}"
             print(f"   ❌ {error_msg}")
             state['errors'].append(error_msg)
+            
+            # Try to delete the file even if upload failed
+            try:
+                if 'filepath' in locals() and os.path.exists(filepath):
+                    os.remove(filepath)
+                    log(f"   🗑️  Deleted failed file: {os.path.basename(filepath)}")
+            except:
+                pass
     
     state['generated_images'] = generated_images
     state['upload_results'] = upload_results  # Store upload results here
@@ -602,6 +627,14 @@ Make it funny and exaggerated!"""
     successful_uploads = sum(1 for r in upload_results if r.get('success'))
     print(f"✅ [DALLE] Generated {len(generated_images)}/5 images")
     print(f"✅ [UPLOAD] Uploaded {successful_uploads}/{len(generated_images)} memes")
+    
+    # Clean up temp directory if empty
+    try:
+        if os.path.exists(local_meme_dir) and not os.listdir(local_meme_dir):
+            os.rmdir(local_meme_dir)
+            log(f"   🗑️  Cleaned up empty temp directory")
+    except Exception as cleanup_error:
+        log(f"   ⚠️  Could not clean up temp directory: {cleanup_error}")
     
     return state
 
